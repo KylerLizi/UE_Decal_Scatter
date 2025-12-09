@@ -8,7 +8,6 @@
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Text/STextBlock.h"
-#include "Widgets/Layout/SUniformGridPanel.h"
 
 #define LOCTEXT_NAMESPACE "FSimpleEdModeToolkit"
 
@@ -118,13 +117,7 @@ void FSimpleEdModeToolkit::UpdateToolsPanel()
 			.AutoHeight()
 			.Padding(2.0f)
 			[
-				MakeToolButton(LOCTEXT("PlaceTool1", "Place Actor"), "PlacementBrowser.PlaceActors")
-			];
-		ToolsBox->AddSlot()
-			.AutoHeight()
-			.Padding(2.0f)
-			[
-				MakeToolButton(LOCTEXT("PlaceTool2", "Another Tool"), "GenericEditor.Add")
+				MakeToolButton(LOCTEXT("DecalScatterTool", "Decal Scatter"), "LevelEditor.Tabs.Placement", FOnClicked::CreateSP(this, &FSimpleEdModeToolkit::OnPlaceDecalScatterVolumeClicked))
 			];
 	}
 	else if (SelectedCategory == FName("Assets"))
@@ -133,22 +126,26 @@ void FSimpleEdModeToolkit::UpdateToolsPanel()
 			.AutoHeight()
 			.Padding(2.0f)
 			[
-				MakeToolButton(LOCTEXT("AssetTool1", "Create Asset"), "AssetTools.CreateAsset")
-			];
-		ToolsBox->AddSlot()
-			.AutoHeight()
-			.Padding(2.0f)
-			[
-				MakeToolButton(LOCTEXT("AssetTool2", "Find in CB"), "ContentBrowser.AssetTree")
+				MakeToolButton(LOCTEXT("AssetTool1", "Create Asset"), "AssetTools.CreateAsset", FOnClicked())
 			];
 	}
 }
 
-TSharedRef<SWidget> FSimpleEdModeToolkit::MakeToolButton(const FText& ToolName, const FName& IconName)
+FReply FSimpleEdModeToolkit::OnPlaceDecalScatterVolumeClicked()
+{
+    if (FSimpleEdMode* EdMode = static_cast<FSimpleEdMode*>(GetEditorMode()))
+    {
+        EdMode->StartPlacingDecalScatterVolume();
+    }
+	return FReply::Handled();
+}
+
+TSharedRef<SWidget> FSimpleEdModeToolkit::MakeToolButton(const FText& ToolName, const FName& IconName, const FOnClicked& OnClickedDelegate)
 {
 	return SNew(SButton)
 		.HAlign(HAlign_Center)
 		.VAlign(VAlign_Center)
+        .OnClicked(OnClickedDelegate)
 		[
 			SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
@@ -167,4 +164,5 @@ TSharedRef<SWidget> FSimpleEdModeToolkit::MakeToolButton(const FText& ToolName, 
 		];
 }
 
+#undef LOCTEXT_NAMESPACE
 #undef LOCTEXT_NAMESPACE

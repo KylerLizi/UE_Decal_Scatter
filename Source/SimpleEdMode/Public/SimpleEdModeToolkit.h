@@ -22,7 +22,8 @@ private:
 	TSharedRef<SWidget> BuildCategoryPanel();
 	void UpdateToolsPanel();
 	FReply OnCategorySelected(FName CategoryName);
-	TSharedRef<SWidget> MakeToolButton(const FText& ToolName, const FName& IconName);
+	TSharedRef<SWidget> MakeToolButton(const FText& ToolName, const FName& IconName, const FOnClicked& OnClickedDelegate);
+	FReply OnPlaceDecalScatterVolumeClicked();
 
 private:
 	TSharedPtr<SWidget> ToolkitWidget;

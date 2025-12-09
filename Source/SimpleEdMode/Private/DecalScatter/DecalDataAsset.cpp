@@ -1,0 +1,1 @@
+#include "DecalScatter/DecalDataAsset.h"
