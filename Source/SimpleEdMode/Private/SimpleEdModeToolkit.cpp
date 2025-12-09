@@ -1,6 +1,7 @@
 #include "SimpleEdModeToolkit.h"
 #include "SimpleEdModeEdMode.h"
 #include "EditorModeManager.h"
+#include "SimpleEdModeStyle.h"
 #include "EditorStyleSet.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Layout/SBorder.h"
@@ -19,6 +20,10 @@ void FSimpleEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitHost)
 {
 	ToolkitWidget = BuildContent();
 	FModeToolkit::Init(InitToolkitHost);
+
+	// Set default category and update the tool panel
+	SelectedCategory = FName("Placement");
+	UpdateToolsPanel();
 }
 
 FName FSimpleEdModeToolkit::GetToolkitFName() const
@@ -76,7 +81,7 @@ TSharedRef<SWidget> FSimpleEdModeToolkit::BuildCategoryPanel()
 				.OnClicked(this, &FSimpleEdModeToolkit::OnCategorySelected, FName("Placement"))
 				[
 					SNew(SImage)
-					.Image(FEditorStyle::GetBrush("LevelEditor.Tabs.Placement"))
+					.Image(FSimpleEdModeStyle::Get().GetBrush("SimpleEdMode.PlacementIcon"))
 				]
 			]
 
@@ -90,7 +95,7 @@ TSharedRef<SWidget> FSimpleEdModeToolkit::BuildCategoryPanel()
 				.OnClicked(this, &FSimpleEdModeToolkit::OnCategorySelected, FName("Assets"))
 				[
 					SNew(SImage)
-					.Image(FEditorStyle::GetBrush("ContentBrowser.Tab"))
+					.Image(FSimpleEdModeStyle::Get().GetBrush("SimpleEdMode.MoveIcon"))
 				]
 			]
 		];
