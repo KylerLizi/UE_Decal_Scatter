@@ -45,6 +45,12 @@ public:
 	int32 GetManagedVolumeCount() const;
 
 private:
+	/**
+	 * Initializes the brush shape for a newly created volume
+	 * @param Volume The volume to initialize
+	 */
+	void InitializeBrushShape(ADecalScatterVolume* Volume);
+
 	/** The volume currently being placed */
 	ADecalScatterVolume* CurrentPlacingVolume;
 

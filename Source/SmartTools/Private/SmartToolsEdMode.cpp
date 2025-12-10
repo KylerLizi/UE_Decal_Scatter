@@ -1,28 +1,28 @@
-#include "SimpleEdModeEdMode.h"
-#include "SimpleEdModeToolkit.h"
+#include "SmartToolsEdMode.h"
+#include "SmartToolsToolkit.h"
 #include "EditorModeManager.h"
 #include "Toolkits/ToolkitManager.h"
 #include "EditorViewportClient.h"
 #include "Engine/World.h"
 #include "DecalScatter/DecalScatterVolume.h"
 
-const FEditorModeID FSimpleEdMode::EM_SimpleEdModeId = TEXT("EM_SimpleEdMode");
+const FEditorModeID FSmartToolsEdMode::EM_SmartToolsEdModeId = TEXT("EM_SmartTools");
 
-FSimpleEdMode::FSimpleEdMode()
+FSmartToolsEdMode::FSmartToolsEdMode()
 {
 }
 
-FSimpleEdMode::~FSimpleEdMode()
+FSmartToolsEdMode::~FSmartToolsEdMode()
 {
 }
 
-void FSimpleEdMode::Enter()
+void FSmartToolsEdMode::Enter()
 {
 	FEdMode::Enter();
 
 	if (!Toolkit.IsValid() && UsesToolkits())
 	{
-		ToolkitInstance = MakeShareable(new FSimpleEdModeToolkit());
+		ToolkitInstance = MakeShareable(new FSmartToolsToolkit());
 		Toolkit = ToolkitInstance;
 
 		if (Owner)
@@ -32,7 +32,7 @@ void FSimpleEdMode::Enter()
 	}
 }
 
-void FSimpleEdMode::Exit()
+void FSmartToolsEdMode::Exit()
 {
     DecalManager.ClearAllVolumes();
     CurrentToolMode = EToolMode::None;
@@ -47,7 +47,7 @@ void FSimpleEdMode::Exit()
 	FEdMode::Exit();
 }
 
-void FSimpleEdMode::Tick(FEditorViewportClient* ViewportClient, float DeltaTime)
+void FSmartToolsEdMode::Tick(FEditorViewportClient* ViewportClient, float DeltaTime)
 {
     FEdMode::Tick(ViewportClient, DeltaTime);
 
@@ -55,28 +55,28 @@ void FSimpleEdMode::Tick(FEditorViewportClient* ViewportClient, float DeltaTime)
     {
         ADecalScatterVolume* PlacingVolume = DecalManager.GetCurrentPlacingVolume();
         if (PlacingVolume)
+    {
+        // Get mouse position
+        FViewportCursorLocation MouseLocation = ViewportClient->GetCursorWorldLocationFromMousePos();
+
+        // Line trace from camera to world to get a valid placement location
+        FHitResult HitResult;
+        ViewportClient->GetWorld()->LineTraceSingleByChannel(
+            HitResult,
+            MouseLocation.GetOrigin(),
+            MouseLocation.GetOrigin() + MouseLocation.GetDirection() * 100000.0f,
+            ECC_Visibility
+        );
+
+        if (HitResult.bBlockingHit)
         {
-            // Get mouse position
-            FViewportCursorLocation MouseLocation = ViewportClient->GetCursorWorldLocationFromMousePos();
-
-            // Line trace from camera to world to get a valid placement location
-            FHitResult HitResult;
-            ViewportClient->GetWorld()->LineTraceSingleByChannel(
-                HitResult,
-                MouseLocation.GetOrigin(),
-                MouseLocation.GetOrigin() + MouseLocation.GetDirection() * 100000.0f,
-                ECC_Visibility
-            );
-
-            if (HitResult.bBlockingHit)
-            {
                 PlacingVolume->SetActorLocation(HitResult.Location);
             }
         }
     }
 }
 
-bool FSimpleEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click)
+bool FSmartToolsEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click)
 {
     if (CurrentToolMode == EToolMode::PlacingDecalScatterVolume && Click.GetKey() == EKeys::LeftMouseButton)
     {
@@ -93,7 +93,7 @@ bool FSimpleEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHitPro
     return FEdMode::HandleClick(InViewportClient, HitProxy, Click);
 }
 
-void FSimpleEdMode::StartPlacingDecalScatterVolume()
+void FSmartToolsEdMode::StartPlacingDecalScatterVolume()
 {
     if (GetWorld())
     {
@@ -101,3 +101,4 @@ void FSimpleEdMode::StartPlacingDecalScatterVolume()
         DecalManager.CreatePlacingVolume(GetWorld());
     }
 }
+

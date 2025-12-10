@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Styling/SlateStyle.h"
 
-class FSimpleEdModeStyle
+class FSmartToolsStyle
 {
 public:
 	static void Initialize();
@@ -15,3 +15,4 @@ private:
 	static TSharedRef<class FSlateStyleSet> Create();
 	static TSharedPtr<class FSlateStyleSet> StyleInstance;
 };
+

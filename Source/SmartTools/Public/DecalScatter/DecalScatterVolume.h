@@ -7,7 +7,7 @@
 class UDecalDataAsset;
 
 UCLASS()
-class SIMPLEEDMODE_API ADecalScatterVolume : public AVolume
+class SMARTTOOLS_API ADecalScatterVolume : public AVolume
 {
     GENERATED_BODY()
 
@@ -43,3 +43,4 @@ public:
     UFUNCTION(CallInEditor, Category = "Decal Scatter")
     void ScatterDecals();
 };
+

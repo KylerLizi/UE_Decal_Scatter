@@ -2,9 +2,9 @@
 
 #include "EdMode.h"
 #include "DecalManager.h"
-#include "SimpleEdModeEdMode.generated.h"
+#include "SmartToolsEdMode.generated.h"
 
-class FSimpleEdModeToolkit;
+class FSmartToolsToolkit;
 class ADecalScatterVolume;
 
 UENUM()
@@ -14,13 +14,13 @@ enum class EToolMode : uint8
 	PlacingDecalScatterVolume
 };
 
-class FSimpleEdMode : public FEdMode
+class FSmartToolsEdMode : public FEdMode
 {
 public:
-	static const FEditorModeID EM_SimpleEdModeId;
+	static const FEditorModeID EM_SmartToolsEdModeId;
 
-	FSimpleEdMode();
-	virtual ~FSimpleEdMode() override;
+	FSmartToolsEdMode();
+	virtual ~FSmartToolsEdMode() override;
 
 	// FEdMode interface
 	virtual void Enter() override;
@@ -34,8 +34,9 @@ public:
 	void StartPlacingDecalScatterVolume();
 
 private:
-	TSharedPtr<FSimpleEdModeToolkit> ToolkitInstance;
+	TSharedPtr<FSmartToolsToolkit> ToolkitInstance;
 
 	EToolMode CurrentToolMode = EToolMode::None;
 	FDecalManager DecalManager;
 };
+

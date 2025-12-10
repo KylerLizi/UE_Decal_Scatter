@@ -90,3 +90,4 @@ void ADecalScatterVolume::ScatterDecals()
         }
     }
 }
+
