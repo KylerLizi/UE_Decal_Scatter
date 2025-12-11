@@ -84,8 +84,8 @@ void FDecalScatterManager::InitializeBrushShape(ADecalScatterVolume* Volume)
 	UCubeBuilder* CubeBuilder = NewObject<UCubeBuilder>();
 	if (CubeBuilder)
 	{
-		CubeBuilder->X = 200.0f;
-		CubeBuilder->Y = 200.0f;
+		CubeBuilder->X = 500.0f;
+		CubeBuilder->Y = 500.0f;
 		CubeBuilder->Z = 200.0f;
 		CubeBuilder->WallThickness = 10.0f;
 		CubeBuilder->Hollow = false;

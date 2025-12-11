@@ -13,6 +13,7 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Input/SSearchBox.h"
 #include "IDocumentation.h"
+#include "Misc/MessageDialog.h"
 
 #define LOCTEXT_NAMESPACE "FSmartToolsToolkit"
 
@@ -22,11 +23,11 @@
 
 void SSmartToolsTools::Construct(const FArguments& InArgs)
 {
-	ActiveTabName = FName("Placement");
+	ActiveTabName = FName("Tools");
 	CurrentSearchText.Empty();
 
 	// Initialize categories and items
-	UpdatePlacementCategories();
+	UpdateToolsCategories();
 
 	// Create tabs panel
 	Tabs = SNew(SVerticalBox)
@@ -103,17 +104,18 @@ void SSmartToolsTools::Construct(const FArguments& InArgs)
 	RefreshFilteredItems();
 }
 
-void SSmartToolsTools::UpdatePlacementCategories()
+void SSmartToolsTools::UpdateToolsCategories()
 {
 	TabNames.Empty();
-	TabNames.Add(FName("Placement"));
+	TabNames.Add(FName("Tools"));
 	TabNames.Add(FName("Move"));
 
 	// Initialize all items
 	AllItems.Empty();
 
-	// Placement items
-	AllItems.Add(MakeShareable(new FPlaceableItem{ FText::FromString("Decal Scatter"), FName("Placement"), "Place a decal scatter volume" }));
+	// Tools items
+	AllItems.Add(MakeShareable(new FPlaceableItem{ FText::FromString("Decal Scatter"), FName("Tools"), "Place a decal scatter volume" }));
+	AllItems.Add(MakeShareable(new FPlaceableItem{ FText::FromString("Delete Empty Mesh"), FName("Tools"), "Delete empty meshes from the scene" }));
 
 }
 
@@ -167,9 +169,9 @@ void SSmartToolsTools::RefreshTabs()
 
 const FSlateBrush* SSmartToolsTools::GetIconForTab(FName TabName) const
 {
-	if (TabName == FName("Placement"))
+	if (TabName == FName("Tools"))
 	{
-		return FSmartToolsStyle::Get().GetBrush("SmartTools.PlacementIcon");
+		return FSmartToolsStyle::Get().GetBrush("SmartTools.ToolsIcon");
 	}
 	if (TabName == FName("Move"))
 	{
@@ -242,11 +244,7 @@ TSharedRef<ITableRow> SSmartToolsTools::OnGenerateWidgetForItem(TSharedPtr<FPlac
 	FSlateFontInfo NameFont = FEditorStyle::GetFontStyle("NormalFont");
 	// Globally enlarge all right panel item text by 1.5x
 	NameFont.Size = FMath::Max(1, FMath::RoundToInt(NameFont.Size * 3 / 2));
-
-	const FSlateColor ItemTextColor = (Item.IsValid() && Item->DisplayName.ToString().Equals(TEXT("Decal Scatter"), ESearchCase::IgnoreCase))
-		? FSlateColor(FLinearColor::White)
-		: FSlateColor::UseForeground();
-
+	
 	return SNew(STableRow<TSharedPtr<FPlaceableItem>>, OwnerTable)
 		[
 			SNew(SButton)
@@ -270,7 +268,7 @@ TSharedRef<ITableRow> SSmartToolsTools::OnGenerateWidgetForItem(TSharedPtr<FPlac
 			[
 				SNew(STextBlock)
 				.Text(Item->DisplayName)
-					.ColorAndOpacity(ItemTextColor)
+				.ColorAndOpacity(FSlateColor(FLinearColor::White))
 				.ToolTipText(FText::FromString(Item->ToolTip))
 				.Font(NameFont)
 			]
@@ -321,6 +319,11 @@ FReply SSmartToolsTools::OnItemClicked(TSharedPtr<FPlaceableItem> Item)
 		return OnPlaceDecalScatterVolumeClicked();
 	}
 
+	if (Item->DisplayName.ToString().Equals(TEXT("Delete Empty Mesh"), ESearchCase::IgnoreCase))
+	{
+		return OnDeleteEmptyMeshClicked();
+	}
+
 	return FReply::Unhandled();
 }
 
@@ -330,6 +333,13 @@ FReply SSmartToolsTools::OnPlaceDecalScatterVolumeClicked()
 	{
 		EdMode->StartPlacingDecalScatterVolume();
 	}
+	return FReply::Handled();
+}
+
+FReply SSmartToolsTools::OnDeleteEmptyMeshClicked()
+{
+	// TODO: Implement DeleteEmptyMesh functionality
+	FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("DeleteEmptyMeshMessage", "Delete Empty Mesh tool is under development. This feature will be implemented soon."));
 	return FReply::Handled();
 }
 
@@ -345,7 +355,12 @@ const FSlateBrush* SSmartToolsTools::GetBrushForItem(const TSharedPtr<FPlaceable
 		return FSmartToolsStyle::Get().GetBrush("SmartTools.DecalScatterIcon");
 	}
 
-	return FSmartToolsStyle::Get().GetBrush("SmartTools.ToolsIcon");
+	if (Item->DisplayName.ToString().Equals(TEXT("Delete Empty Mesh"), ESearchCase::IgnoreCase))
+	{
+		return FSmartToolsStyle::Get().GetBrush("SmartTools.DeleteIcon");
+	}
+
+	return FSmartToolsStyle::Get().GetBrush("SmartTools.ModeIcon");
 }
 
 // ============================================================================
@@ -377,8 +392,8 @@ class FEdMode* FSmartToolsToolkit::GetEditorMode() const
 
 TSharedRef<SWidget> FSmartToolsToolkit::BuildContent()
 {
-	PlacementTools = SNew(SSmartToolsTools);
-	return PlacementTools.ToSharedRef();
+	Tools = SNew(SSmartToolsTools);
+	return Tools.ToSharedRef();
 }
 
 #undef LOCTEXT_NAMESPACE

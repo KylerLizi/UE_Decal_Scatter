@@ -14,7 +14,7 @@ public:
 		FEditorModeRegistry::Get().RegisterMode<FSmartToolsEdMode>(
 			FSmartToolsEdMode::EM_SmartToolsEdModeId,
 			LOCTEXT("SmartToolsEdModeName", "SmartTools"),
-			FSlateIcon(FSmartToolsStyle::GetStyleSetName(), "SmartTools.ToolsIcon"),
+			FSlateIcon(FSmartToolsStyle::GetStyleSetName(), "SmartTools.ModeIcon"),
 			true);
 	}
 

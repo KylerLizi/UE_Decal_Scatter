@@ -37,7 +37,7 @@ private:
 	void RefreshFilteredItems();
 
 	// Tab management
-	void UpdatePlacementCategories();
+	void UpdateToolsCategories();
 	FReply OnTabClicked(FName TabName);
 	void RefreshTabs();
 	const FSlateBrush* GetIconForTab(FName TabName) const;
@@ -51,6 +51,7 @@ private:
 	// Tool callbacks
 	FReply OnItemClicked(TSharedPtr<FPlaceableItem> Item);
 	FReply OnPlaceDecalScatterVolumeClicked();
+	FReply OnDeleteEmptyMeshClicked();
 	FReply OnHelpClicked(TSharedPtr<FPlaceableItem> Item);
 
 private:
@@ -88,5 +89,5 @@ private:
 
 private:
 	TSharedPtr<SWidget> ToolkitWidget;
-	TSharedPtr<SSmartToolsTools> PlacementTools;
+	TSharedPtr<SSmartToolsTools> Tools;
 };

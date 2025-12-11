@@ -40,14 +40,15 @@ TSharedRef<FSlateStyleSet> FSmartToolsStyle::Create()
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("SmartTools")->GetBaseDir() / TEXT("Resources"));
 
 	const FVector2D Icon40x40(40.0f, 40.0f);
-	Style->Set("SmartTools.ToolsIcon", new FSlateImageBrush(Style->RootToContentDir(TEXT("Tools"), TEXT(".png")), Icon40x40));
+	Style->Set("SmartTools.ModeIcon", new FSlateImageBrush(Style->RootToContentDir(TEXT("Mode"), TEXT(".png")), Icon40x40));
 	
 	const FVector2D Icon50x50(50.0f, 50.0f);
-	Style->Set("SmartTools.PlacementIcon", new FSlateImageBrush(Style->RootToContentDir(TEXT("Placement"), TEXT(".png")), Icon50x50));
+	Style->Set("SmartTools.ToolsIcon", new FSlateImageBrush(Style->RootToContentDir(TEXT("Tools"), TEXT(".png")), Icon50x50));
 	Style->Set("SmartTools.MoveIcon", new FSlateImageBrush(Style->RootToContentDir(TEXT("Move"), TEXT(".png")), Icon50x50));
 
 	const FVector2D Icon30x30(30.0f, 30.0f);
 	Style->Set("SmartTools.DecalScatterIcon", new FSlateImageBrush(Style->RootToContentDir(TEXT("DecalScatter"), TEXT(".png")), Icon30x30));
+	Style->Set("SmartTools.DeleteIcon", new FSlateImageBrush(Style->RootToContentDir(TEXT("Delete"), TEXT(".png")), Icon30x30));
 
 	// 添加文字类别说明样式
 	const FTextBlockStyle CategoryTextStyle = FTextBlockStyle()

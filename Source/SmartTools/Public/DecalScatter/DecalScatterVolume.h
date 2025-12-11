@@ -4,7 +4,21 @@
 #include "Engine/TriggerVolume.h"
 #include "DecalScatterVolume.generated.h"
 
-class UDecalDataAsset;
+class ADecalActor;
+class UMaterialInterface;
+class UBrushComponent;
+
+USTRUCT(BlueprintType)
+struct FDecalScatterElement
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Decal")
+    TSoftObjectPtr<UMaterialInterface> DecalMaterial;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Decal", meta = (DisplayName = "Weight"))
+    float Weight = 1.0f;
+};
 
 UCLASS()
 class SMARTTOOLS_API ADecalScatterVolume : public ATriggerVolume
@@ -14,33 +28,59 @@ class SMARTTOOLS_API ADecalScatterVolume : public ATriggerVolume
 public:
     ADecalScatterVolume();
 
-    //~ Begin Scatter Parameters
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Decal Scatter|Scatter Parameters")
-    int32 ScatterCount = 100;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Decal Elements"))
+    TArray<FDecalScatterElement> DecalElements;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Decal Scatter|Scatter Parameters")
-    int32 RandomSeed = 1234;
-    //~ End Scatter Parameters
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Scatter Parameters")
+    int32 ScatterCount = 10;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Scatter Parameters")
+    int32 Seed = 123;
 
-    //~ Begin Decal Parameters
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Decal Scatter|Decal Parameters", meta = (DisplayName = "Size Min"))
-    FVector MinSize = FVector(50.f, 50.f, 50.f);
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Scatter Parameters", meta = (DisplayName = "Random Seed"))
+    bool bRandomSeed = true;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Decal Scatter|Decal Parameters", meta = (DisplayName = "Size Max"))
-    FVector MaxSize = FVector(100.f, 100.f, 100.f);
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Base Scale"))
+    FVector BaseScale = FVector(1.f, 1.f, 1.f);
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Decal Scatter|Decal Parameters", meta = (DisplayName = "Rotation Min (Degrees)"))
-    FRotator MinRotation = FRotator::ZeroRotator;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Uniform Scale"))
+    bool bUniformScale = true;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Decal Scatter|Decal Parameters", meta = (DisplayName = "Rotation Max (Degrees)"))
-    FRotator MaxRotation = FRotator(360.f, 360.f, 360.f);
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Scale Min", ClampMin = "0.0"))
+    float MinScale = 1.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Decal Scatter|Decal Parameters")
-    TSoftObjectPtr<UDecalDataAsset> DecalDataAsset;
-    //~ End Decal Parameters
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Scale Max", ClampMin = "0.0"))
+    float MaxScale = 1.f;
 
-    UFUNCTION(CallInEditor, Category = "Decal Scatter")
+private:
+    UPROPERTY()
+    TArray<TWeakObjectPtr<ADecalActor>> SpawnedDecals;
+
+    // Helpers
+    bool SampleAndHitWithinVolume(FRandomStream& RandomStream,
+                                  class UBrushComponent* BrushComp,
+                                  const FBox& WorldAABB,
+                                  FVector& OutWorldSample,
+                                  FHitResult& OutHit) const;
+
+    const FDecalScatterElement* SelectRandomElement(FRandomStream& RandomStream, float TotalWeight) const;
+
+    FVector ComputeRandomDecalSize(FRandomStream& RandomStream, float SMin, float SMax) const;
+
+    ADecalActor* SpawnDecalActor(UWorld* World,
+                                 UMaterialInterface* DecalMaterial,
+                                 const FString& DecalBaseName,
+                                 const FVector& Location,
+                                 const FVector& SurfaceNormal,
+                                 const FVector& DecalSize) const;
+
+    void GetNormalizedScaleRange(float& OutMin, float& OutMax) const;
+
+public:
+    UFUNCTION(CallInEditor, Category = "00 Decal Scatter")
     void ScatterDecals();
+
+    UFUNCTION(CallInEditor, Category = "00 Decal Scatter")
+    void ClearDecals();
 };
 
