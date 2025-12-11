@@ -9,11 +9,11 @@ class UWorld;
  * Manages the creation and lifecycle of DecalScatterVolume actors during placement mode.
  * This manager handles multiple volumes and doesn't manage their lifecycle after placement.
  */
-class FDecalManager
+class FDecalScatterManager
 {
 public:
-	FDecalManager();
-	~FDecalManager();
+	FDecalScatterManager();
+	~FDecalScatterManager();
 
 	/**
 	 * Creates a new DecalScatterVolume actor for placement

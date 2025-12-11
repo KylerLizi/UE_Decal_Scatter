@@ -107,7 +107,7 @@ void SSmartToolsTools::UpdatePlacementCategories()
 {
 	TabNames.Empty();
 	TabNames.Add(FName("Placement"));
-	TabNames.Add(FName("Assets"));
+	TabNames.Add(FName("Move"));
 
 	// Initialize all items
 	AllItems.Empty();
@@ -115,7 +115,6 @@ void SSmartToolsTools::UpdatePlacementCategories()
 	// Placement items
 	AllItems.Add(MakeShareable(new FPlaceableItem{ FText::FromString("Decal Scatter"), FName("Placement"), "Place a decal scatter volume" }));
 
-	// Assets: empty for now
 }
 
 void SSmartToolsTools::RefreshTabs()
@@ -133,13 +132,34 @@ void SSmartToolsTools::RefreshTabs()
 			.AutoHeight()
 			.Padding(4.0f, 2.0f)
 			[
-				SNew(SButton)
-				.ButtonStyle(FEditorStyle::Get(), "FlatButton")
-				.ToolTipText(FText::FromName(TabName))
-				.OnClicked(FOnClicked::CreateSP(this, &SSmartToolsTools::OnTabClicked, TabName))
+				SNew(SVerticalBox)
+
+				// Icon button
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.HAlign(HAlign_Center)
 				[
-					SNew(SImage)
-					.Image(GetIconForTab(TabName))
+					SNew(SButton)
+					.ButtonStyle(FEditorStyle::Get(), "FlatButton")
+					.ToolTipText(FText::FromName(TabName))
+					.OnClicked(FOnClicked::CreateSP(this, &SSmartToolsTools::OnTabClicked, TabName))
+					[
+						SNew(SImage)
+						.Image(GetIconForTab(TabName))
+					]
+				]
+
+				// Category text below icon
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.HAlign(HAlign_Center)
+				.Padding(2.0f, 0.0f, 2.0f, 0.0f)
+				[
+					SNew(STextBlock)
+					.Text(FText::FromName(TabName))
+					.TextStyle(FSmartToolsStyle::Get(), "SmartTools.CategoryText")
+					.Justification(ETextJustify::Center)
+					.WrapTextAt(50.0f)
 				]
 			];
 	}
@@ -151,7 +171,7 @@ const FSlateBrush* SSmartToolsTools::GetIconForTab(FName TabName) const
 	{
 		return FSmartToolsStyle::Get().GetBrush("SmartTools.PlacementIcon");
 	}
-	if (TabName == FName("Assets"))
+	if (TabName == FName("Move"))
 	{
 		return FSmartToolsStyle::Get().GetBrush("SmartTools.MoveIcon");
 	}
@@ -223,7 +243,15 @@ TSharedRef<ITableRow> SSmartToolsTools::OnGenerateWidgetForItem(TSharedPtr<FPlac
 	// Globally enlarge all right panel item text by 1.5x
 	NameFont.Size = FMath::Max(1, FMath::RoundToInt(NameFont.Size * 3 / 2));
 
+	const FSlateColor ItemTextColor = (Item.IsValid() && Item->DisplayName.ToString().Equals(TEXT("Decal Scatter"), ESearchCase::IgnoreCase))
+		? FSlateColor(FLinearColor::White)
+		: FSlateColor::UseForeground();
+
 	return SNew(STableRow<TSharedPtr<FPlaceableItem>>, OwnerTable)
+		[
+			SNew(SButton)
+			.ButtonStyle(FEditorStyle::Get(), "FlatButton")
+			.OnClicked(FOnClicked::CreateSP(this, &SSmartToolsTools::OnItemClicked, Item))
 		[
 			SNew(SHorizontalBox)
 
@@ -242,6 +270,7 @@ TSharedRef<ITableRow> SSmartToolsTools::OnGenerateWidgetForItem(TSharedPtr<FPlac
 			[
 				SNew(STextBlock)
 				.Text(Item->DisplayName)
+					.ColorAndOpacity(ItemTextColor)
 				.ToolTipText(FText::FromString(Item->ToolTip))
 				.Font(NameFont)
 			]
@@ -265,6 +294,7 @@ TSharedRef<ITableRow> SSmartToolsTools::OnGenerateWidgetForItem(TSharedPtr<FPlac
 				[
 					SNew(SImage)
 					.Image(FEditorStyle::GetBrush("HelpIcon"))
+					]
 				]
 			]
 		];
@@ -276,6 +306,22 @@ FReply SSmartToolsTools::OnHelpClicked(TSharedPtr<FPlaceableItem> Item)
 	const FString Excerpt = Item.IsValid() ? Item->DisplayName.ToString() : TEXT("Overview");
 	IDocumentation::Get()->Open(PreviewLink, Excerpt);
 	return FReply::Handled();
+}
+
+FReply SSmartToolsTools::OnItemClicked(TSharedPtr<FPlaceableItem> Item)
+{
+	if (!Item.IsValid())
+	{
+		return FReply::Unhandled();
+	}
+
+	// Route to appropriate handler based on item name
+	if (Item->DisplayName.ToString().Equals(TEXT("Decal Scatter"), ESearchCase::IgnoreCase))
+	{
+		return OnPlaceDecalScatterVolumeClicked();
+	}
+
+	return FReply::Unhandled();
 }
 
 FReply SSmartToolsTools::OnPlaceDecalScatterVolumeClicked()

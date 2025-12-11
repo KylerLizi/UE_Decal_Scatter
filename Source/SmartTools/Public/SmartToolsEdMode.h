@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EdMode.h"
-#include "DecalManager.h"
+#include "DecalScatter/DecalScatterManager.h"
 #include "SmartToolsEdMode.generated.h"
 
 class FSmartToolsToolkit;
@@ -37,6 +37,6 @@ private:
 	TSharedPtr<FSmartToolsToolkit> ToolkitInstance;
 
 	EToolMode CurrentToolMode = EToolMode::None;
-	FDecalManager DecalManager;
+	FDecalScatterManager DecalScatterManager;
 };
 

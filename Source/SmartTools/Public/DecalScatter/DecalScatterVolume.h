@@ -1,13 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Volume.h"
+#include "Engine/TriggerVolume.h"
 #include "DecalScatterVolume.generated.h"
 
 class UDecalDataAsset;
 
 UCLASS()
-class SMARTTOOLS_API ADecalScatterVolume : public AVolume
+class SMARTTOOLS_API ADecalScatterVolume : public ATriggerVolume
 {
     GENERATED_BODY()
 

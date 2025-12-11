@@ -1,21 +1,22 @@
-#include "DecalManager.h"
+#include "DecalScatter/DecalScatterManager.h"
 #include "DecalScatter/DecalScatterVolume.h"
 #include "Engine/World.h"
 #include "Engine/Brush.h"
 #include "Components/BrushComponent.h"
 #include "Builders/CubeBuilder.h"
+#include "DecalScatter/DecalScatterFactory.h"
 
-FDecalManager::FDecalManager()
+FDecalScatterManager::FDecalScatterManager()
 	: CurrentPlacingVolume(nullptr)
 {
 }
 
-FDecalManager::~FDecalManager()
+FDecalScatterManager::~FDecalScatterManager()
 {
 	ClearAllVolumes();
 }
 
-ADecalScatterVolume* FDecalManager::CreatePlacingVolume(UWorld* World)
+ADecalScatterVolume* FDecalScatterManager::CreatePlacingVolume(UWorld* World)
 {
 	if (!World)
 	{
@@ -37,7 +38,7 @@ ADecalScatterVolume* FDecalManager::CreatePlacingVolume(UWorld* World)
 	return NewVolume;
 }
 
-void FDecalManager::FinalizePlacement(ADecalScatterVolume* Volume)
+void FDecalScatterManager::FinalizePlacement(ADecalScatterVolume* Volume)
 {
 	if (Volume == CurrentPlacingVolume)
 	{
@@ -48,24 +49,24 @@ void FDecalManager::FinalizePlacement(ADecalScatterVolume* Volume)
 	// The volume will remain in the world and is no longer managed by this manager
 }
 
-ADecalScatterVolume* FDecalManager::GetCurrentPlacingVolume() const
+ADecalScatterVolume* FDecalScatterManager::GetCurrentPlacingVolume() const
 {
 	return CurrentPlacingVolume;
 }
 
-void FDecalManager::ClearAllVolumes()
+void FDecalScatterManager::ClearAllVolumes()
 {
 	// Stop tracking, but DO NOT destroy volumes; their lifecycle is owned by the level
 	ManagedVolumes.Empty();
 	CurrentPlacingVolume = nullptr;
 }
 
-int32 FDecalManager::GetManagedVolumeCount() const
+int32 FDecalScatterManager::GetManagedVolumeCount() const
 {
 	return ManagedVolumes.Num();
 }
 
-void FDecalManager::InitializeBrushShape(ADecalScatterVolume* Volume)
+void FDecalScatterManager::InitializeBrushShape(ADecalScatterVolume* Volume)
 {
 	if (!Volume)
 	{
@@ -79,7 +80,7 @@ void FDecalManager::InitializeBrushShape(ADecalScatterVolume* Volume)
 	}
 
 #if WITH_EDITOR
-	// Use UCubeBuilder (Editor-only) to generate a box brush like the UI "Brush Settings"
+	// Build brush using our ActorFactory helper (engine-like path)
 	UCubeBuilder* CubeBuilder = NewObject<UCubeBuilder>();
 	if (CubeBuilder)
 	{
@@ -90,7 +91,7 @@ void FDecalManager::InitializeBrushShape(ADecalScatterVolume* Volume)
 		CubeBuilder->Hollow = false;
 		CubeBuilder->Tessellated = false;
 
-		CubeBuilder->Build(Volume->GetWorld(), Volume);
+		UDecalScatterFactory::CreateBrushForDecalScatterVolume(Volume, CubeBuilder);
 	}
 
 	// Refresh rendering/collision after brush rebuild

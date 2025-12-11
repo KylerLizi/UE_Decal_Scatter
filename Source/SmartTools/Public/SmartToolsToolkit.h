@@ -49,6 +49,7 @@ private:
 	const FSlateBrush* GetBrushForItem(const TSharedPtr<FPlaceableItem>& Item) const;
 
 	// Tool callbacks
+	FReply OnItemClicked(TSharedPtr<FPlaceableItem> Item);
 	FReply OnPlaceDecalScatterVolumeClicked();
 	FReply OnHelpClicked(TSharedPtr<FPlaceableItem> Item);
 

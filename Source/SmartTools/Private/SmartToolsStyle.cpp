@@ -1,6 +1,8 @@
 #include "SmartToolsStyle.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "Styling/SlateTypes.h"
 #include "Interfaces/IPluginManager.h"
+#include "Misc/Paths.h"
 
 TSharedPtr<FSlateStyleSet> FSmartToolsStyle::StyleInstance = nullptr;
 
@@ -46,6 +48,15 @@ TSharedRef<FSlateStyleSet> FSmartToolsStyle::Create()
 
 	const FVector2D Icon30x30(30.0f, 30.0f);
 	Style->Set("SmartTools.DecalScatterIcon", new FSlateImageBrush(Style->RootToContentDir(TEXT("DecalScatter"), TEXT(".png")), Icon30x30));
+
+	// 添加文字类别说明样式
+	const FTextBlockStyle CategoryTextStyle = FTextBlockStyle()
+		.SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 10))
+		.SetColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.7f, 0.7f, 1.0f)))
+		.SetShadowOffset(FVector2D(1.0f, 1.0f))
+		.SetShadowColorAndOpacity(FLinearColor(0.0f, 0.0f, 0.0f, 0.3f));
+	
+	Style->Set("SmartTools.CategoryText", CategoryTextStyle);
 
 	return Style;
 }
