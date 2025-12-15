@@ -41,7 +41,7 @@ const FDecalScatterElement* ADecalScatterVolume::SelectRandomElement(FRandomStre
     return &DecalElements[0];
 }
 
-FVector ADecalScatterVolume::ComputeRandomDecalSize(FRandomStream& RandomStream, float SMin, float SMax) const
+FVector ADecalScatterVolume::ComputeRandomActorScale(FRandomStream& RandomStream, float SMin, float SMax) const
 {
     if (bUniformScale)
     {
@@ -54,29 +54,37 @@ FVector ADecalScatterVolume::ComputeRandomDecalSize(FRandomStream& RandomStream,
     return FVector(BaseScale.X * Sx, BaseScale.Y * Sy, BaseScale.Z * Sz);
 }
 
+FRotator ADecalScatterVolume::ComputeRandomActorRotation(FRandomStream& RandomStream) const
+{
+    const float Yaw = RandomStream.FRandRange(0.f, 360.f);
+    const FQuat BaseRot = FQuat(FRotator(-90.f, 0.f, 0.f));
+    const FQuat YawQuat = FQuat(FRotator(0.f, Yaw, 0.f));
+    return (YawQuat * BaseRot).Rotator();
+}
+
 ADecalActor* ADecalScatterVolume::SpawnDecalActor(UWorld* World,
                                  UMaterialInterface* DecalMaterial,
                                  const FString& DecalBaseName,
                                  const FVector& Location,
-                                 const FVector& SurfaceNormal,
-                                 const FVector& DecalSize) const
+                                 const FRotator& Rotation,
+                                 const FVector& ActorScale) const
 {
     if (!World || !DecalMaterial)
     {
         return nullptr;
     }
 
-    const FRotator FinalRotation = UKismetMathLibrary::MakeRotFromZ(SurfaceNormal);
-
     FActorSpawnParameters SpawnParams;
     SpawnParams.Name = MakeUniqueObjectName(World, ADecalActor::StaticClass(), FName(*DecalBaseName));
 
-    ADecalActor* NewDecal = World->SpawnActor<ADecalActor>(Location, FinalRotation, SpawnParams);
+    ADecalActor* NewDecal = World->SpawnActor<ADecalActor>(Location, FRotator::ZeroRotator, SpawnParams);
     if (NewDecal)
     {
+        NewDecal->SetActorRotation(Rotation);
         NewDecal->SetDecalMaterial(DecalMaterial);
-        NewDecal->GetDecal()->DecalSize = DecalSize;
-        NewDecal->SetActorScale3D(FVector(1.0f));
+        // Fixed decal size as requested (X=128, Y=256, Z=256)
+        NewDecal->GetDecal()->DecalSize = FVector(128.f, 256.f, 256.f);
+        NewDecal->SetActorScale3D(ActorScale);
 #if WITH_EDITOR
         NewDecal->SetActorLabel(DecalBaseName);
 #endif
@@ -214,8 +222,8 @@ void ADecalScatterVolume::ScatterDecals()
             }
 
             // Debug draw: sample (green) and hit (red)
-            DrawDebugSphere(World, WorldSample, 10.f, 12, FColor::Green, false, 3.0f, 0, 1.25f);
-            DrawDebugSphere(World, Hit.Location, 8.f, 12, FColor::Red, false, 3.0f, 0, 1.25f);
+            //DrawDebugSphere(World, WorldSample, 10.f, 12, FColor::Green, false, 3.0f, 0, 1.25f);
+            //DrawDebugSphere(World, Hit.Location, 8.f, 12, FColor::Red, false, 3.0f, 0, 1.25f);
 
             // Pick a decal element and load material
             const FDecalScatterElement* Selected = SelectRandomElement(RandomStream, TotalWeight);
@@ -229,10 +237,11 @@ void ADecalScatterVolume::ScatterDecals()
                 continue; // resample
             }
 
-            // Size and spawn
-            const FVector DecalSize = ComputeRandomDecalSize(RandomStream, SMin, SMax);
+            // Rotation/Scale and spawn
+            const FVector ActorScale = ComputeRandomActorScale(RandomStream, SMin, SMax);
+            const FRotator ActorRot = ComputeRandomActorRotation(RandomStream);
             const FString DecalBaseName = Mat->GetName();
-            if (ADecalActor* NewDecal = SpawnDecalActor(World, Mat, DecalBaseName, Hit.Location, Hit.ImpactNormal, DecalSize))
+            if (ADecalActor* NewDecal = SpawnDecalActor(World, Mat, DecalBaseName, Hit.Location, ActorRot, ActorScale))
             {
                 SpawnedDecals.Add(NewDecal);
                 bSpawned = true;

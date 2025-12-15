@@ -65,14 +65,15 @@ private:
 
     const FDecalScatterElement* SelectRandomElement(FRandomStream& RandomStream, float TotalWeight) const;
 
-    FVector ComputeRandomDecalSize(FRandomStream& RandomStream, float SMin, float SMax) const;
+    FVector ComputeRandomActorScale(FRandomStream& RandomStream, float SMin, float SMax) const;
+    FRotator ComputeRandomActorRotation(FRandomStream& RandomStream) const;
 
     ADecalActor* SpawnDecalActor(UWorld* World,
                                  UMaterialInterface* DecalMaterial,
                                  const FString& DecalBaseName,
                                  const FVector& Location,
-                                 const FVector& SurfaceNormal,
-                                 const FVector& DecalSize) const;
+                                 const FRotator& Rotation,
+                                 const FVector& ActorScale) const;
 
     void GetNormalizedScaleRange(float& OutMin, float& OutMax) const;
 
