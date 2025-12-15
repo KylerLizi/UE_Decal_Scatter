@@ -15,10 +15,24 @@ ADecalScatterVolume::ADecalScatterVolume()
 
 // --- Helpers ---
 
-void ADecalScatterVolume::GetNormalizedScaleRange(float& OutMin, float& OutMax) const
+void ADecalScatterVolume::GetNormalizedUniformScaleRange(float& OutMin, float& OutMax) const
 {
-    OutMin = FMath::Max(0.f, FMath::Min(MinScale, MaxScale));
-    OutMax = FMath::Max(OutMin, FMath::Max(MinScale, MaxScale));
+    OutMin = FMath::Max(0.f, FMath::Min(UniformMinScale, UniformMaxScale));
+    OutMax = FMath::Max(OutMin, FMath::Max(UniformMinScale, UniformMaxScale));
+}
+
+void ADecalScatterVolume::GetNormalizedNonUniformScaleRange(FVector& OutMin, FVector& OutMax) const
+{
+    const FVector RawMin = NonUniformMinScale;
+    const FVector RawMax = NonUniformMaxScale;
+
+    OutMin.X = FMath::Max(0.f, FMath::Min(RawMin.X, RawMax.X));
+    OutMin.Y = FMath::Max(0.f, FMath::Min(RawMin.Y, RawMax.Y));
+    OutMin.Z = FMath::Max(0.f, FMath::Min(RawMin.Z, RawMax.Z));
+
+    OutMax.X = FMath::Max(OutMin.X, FMath::Max(RawMin.X, RawMax.X));
+    OutMax.Y = FMath::Max(OutMin.Y, FMath::Max(RawMin.Y, RawMax.Y));
+    OutMax.Z = FMath::Max(OutMin.Z, FMath::Max(RawMin.Z, RawMax.Z));
 }
 
 const FDecalScatterElement* ADecalScatterVolume::SelectRandomElement(FRandomStream& RandomStream, float TotalWeight) const
@@ -41,17 +55,24 @@ const FDecalScatterElement* ADecalScatterVolume::SelectRandomElement(FRandomStre
     return &DecalElements[0];
 }
 
-FVector ADecalScatterVolume::ComputeRandomActorScale(FRandomStream& RandomStream, float SMin, float SMax) const
+FVector ADecalScatterVolume::ComputeRandomActorScale(FRandomStream& RandomStream) const
 {
     if (bUniformScale)
     {
+        float SMin = 0.f, SMax = 0.f;
+        GetNormalizedUniformScaleRange(SMin, SMax);
         const float S = RandomStream.FRandRange(SMin, SMax);
-        return BaseScale * S;
+        return FVector(S, S, S);
     }
-    const float Sx = RandomStream.FRandRange(SMin, SMax);
-    const float Sy = RandomStream.FRandRange(SMin, SMax);
-    const float Sz = RandomStream.FRandRange(SMin, SMax);
-    return FVector(BaseScale.X * Sx, BaseScale.Y * Sy, BaseScale.Z * Sz);
+
+    FVector SMin(1.f, 1.f, 1.f);
+    FVector SMax(1.f, 1.f, 1.f);
+    GetNormalizedNonUniformScaleRange(SMin, SMax);
+
+    const float Sx = RandomStream.FRandRange(SMin.X, SMax.X);
+    const float Sy = RandomStream.FRandRange(SMin.Y, SMax.Y);
+    const float Sz = RandomStream.FRandRange(SMin.Z, SMax.Z);
+    return FVector(Sx, Sy, Sz);
 }
 
 FRotator ADecalScatterVolume::ComputeRandomActorRotation(FRandomStream& RandomStream) const
@@ -191,7 +212,7 @@ void ADecalScatterVolume::ScatterDecals()
     }
     const FBox WorldAABB = BrushComp->CalcBounds(GetActorTransform()).GetBox();
 
-    // Precompute total weight and scale range
+    // Precompute total weight
     float TotalWeight = 0.0f;
     for (const FDecalScatterElement& Element : DecalElements)
     {
@@ -202,9 +223,6 @@ void ADecalScatterVolume::ScatterDecals()
         UE_LOG(LogTemp, Warning, TEXT("Total weight of decal elements is 0. Please set positive weights."));
         return;
     }
-
-    float SMin = 0.f, SMax = 0.f;
-    GetNormalizedScaleRange(SMin, SMax);
 
     // Scatter loop
     for (int32 i = 0; i < ScatterCount; ++i)
@@ -238,7 +256,7 @@ void ADecalScatterVolume::ScatterDecals()
             }
 
             // Rotation/Scale and spawn
-            const FVector ActorScale = ComputeRandomActorScale(RandomStream, SMin, SMax);
+            const FVector ActorScale = ComputeRandomActorScale(RandomStream);
             const FRotator ActorRot = ComputeRandomActorRotation(RandomStream);
             const FString DecalBaseName = Mat->GetName();
             if (ADecalActor* NewDecal = SpawnDecalActor(World, Mat, DecalBaseName, Hit.Location, ActorRot, ActorScale))

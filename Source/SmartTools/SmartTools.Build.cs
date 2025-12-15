@@ -18,6 +18,7 @@ public class SmartTools : ModuleRules
 			"Slate",
 			"SlateCore",
 			"InputCore",
+			"PropertyEditor",
 			"UnrealEd",
 			"LevelEditor",
 			"EditorStyle",

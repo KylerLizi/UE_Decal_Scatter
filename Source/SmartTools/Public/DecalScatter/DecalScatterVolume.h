@@ -28,29 +28,32 @@ class SMARTTOOLS_API ADecalScatterVolume : public ATriggerVolume
 public:
     ADecalScatterVolume();
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Decal Elements"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Decal Elements"))
     TArray<FDecalScatterElement> DecalElements;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Scatter Parameters")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int32 ScatterCount = 10;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Scatter Parameters")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int32 Seed = 123;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Scatter Parameters", meta = (DisplayName = "Random Seed"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Random Seed"))
     bool bRandomSeed = true;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Base Scale"))
-    FVector BaseScale = FVector(1.f, 1.f, 1.f);
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Uniform Scale"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Uniform Scale"))
     bool bUniformScale = true;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Scale Min", ClampMin = "0.0"))
-    float MinScale = 1.f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Scale Min", ClampMin = "0.0"))
+    float UniformMinScale = 1.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "00 Decal Scatter|Decal Parameters", meta = (DisplayName = "Scale Max", ClampMin = "0.0"))
-    float MaxScale = 1.f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Scale Max", ClampMin = "0.0"))
+    float UniformMaxScale = 1.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Scale Min"))
+    FVector NonUniformMinScale = FVector(1.f, 1.f, 1.f);
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Scale Max"))
+    FVector NonUniformMaxScale = FVector(1.f, 1.f, 1.f);
 
 private:
     UPROPERTY()
@@ -65,7 +68,7 @@ private:
 
     const FDecalScatterElement* SelectRandomElement(FRandomStream& RandomStream, float TotalWeight) const;
 
-    FVector ComputeRandomActorScale(FRandomStream& RandomStream, float SMin, float SMax) const;
+    FVector ComputeRandomActorScale(FRandomStream& RandomStream) const;
     FRotator ComputeRandomActorRotation(FRandomStream& RandomStream) const;
 
     ADecalActor* SpawnDecalActor(UWorld* World,
@@ -75,13 +78,12 @@ private:
                                  const FRotator& Rotation,
                                  const FVector& ActorScale) const;
 
-    void GetNormalizedScaleRange(float& OutMin, float& OutMax) const;
+    void GetNormalizedUniformScaleRange(float& OutMin, float& OutMax) const;
+    void GetNormalizedNonUniformScaleRange(FVector& OutMin, FVector& OutMax) const;
 
 public:
-    UFUNCTION(CallInEditor, Category = "00 Decal Scatter")
     void ScatterDecals();
 
-    UFUNCTION(CallInEditor, Category = "00 Decal Scatter")
     void ClearDecals();
 };
 
