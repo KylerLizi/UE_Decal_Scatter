@@ -7,6 +7,50 @@
 #include "Components/BrushComponent.h"
 #include "DrawDebugHelpers.h"
 
+namespace
+{
+	static FIntVector ToGridKey(const FVector& P, float CellSize)
+	{
+		return FIntVector(
+			FMath::FloorToInt(P.X / CellSize),
+			FMath::FloorToInt(P.Y / CellSize),
+			FMath::FloorToInt(P.Z / CellSize));
+	}
+
+	static bool HasNearbyPointWithinRadius(
+		const TMap<FIntVector, TArray<FVector>>& Grid,
+		float CellSize,
+		const FVector& P,
+		float Radius)
+	{
+		const float RadiusSq = Radius * Radius;
+		const FIntVector Key = ToGridKey(P, CellSize);
+
+		for (int32 Dx = -1; Dx <= 1; ++Dx)
+		{
+			for (int32 Dy = -1; Dy <= 1; ++Dy)
+			{
+				for (int32 Dz = -1; Dz <= 1; ++Dz)
+				{
+					const FIntVector Nk(Key.X + Dx, Key.Y + Dy, Key.Z + Dz);
+					if (const TArray<FVector>* Bucket = Grid.Find(Nk))
+					{
+						for (const FVector& Q : *Bucket)
+						{
+							if (FVector::DistSquared(P, Q) < RadiusSq)
+							{
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+}
+
 ADecalScatterVolume::ADecalScatterVolume()
 {
     // AVolume defaults to a box brush, so we only need to set the color.
@@ -90,13 +134,31 @@ ADecalActor* ADecalScatterVolume::SpawnDecalActor(UWorld* World,
                                  const FRotator& Rotation,
                                  const FVector& ActorScale) const
 {
-    if (!World || !DecalMaterial)
+    if (!IsValid(World) || !IsValid(DecalMaterial))
     {
         return nullptr;
     }
 
+	if (Location.ContainsNaN()
+		|| ActorScale.ContainsNaN()
+		|| !FMath::IsFinite(Location.X) || !FMath::IsFinite(Location.Y) || !FMath::IsFinite(Location.Z)
+		|| !FMath::IsFinite(ActorScale.X) || !FMath::IsFinite(ActorScale.Y) || !FMath::IsFinite(ActorScale.Z)
+		|| !FMath::IsFinite(Rotation.Pitch) || !FMath::IsFinite(Rotation.Yaw) || !FMath::IsFinite(Rotation.Roll))
+	{
+		return nullptr;
+	}
+
+	const FVector SafeScale(
+		FMath::Max(ActorScale.X, KINDA_SMALL_NUMBER),
+		FMath::Max(ActorScale.Y, KINDA_SMALL_NUMBER),
+		FMath::Max(ActorScale.Z, KINDA_SMALL_NUMBER));
+
     FActorSpawnParameters SpawnParams;
-    SpawnParams.Name = MakeUniqueObjectName(World, ADecalActor::StaticClass(), FName(*DecalBaseName));
+    if (ULevel* Level = GetLevel())
+    {
+		SpawnParams.OverrideLevel = Level;
+    }
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
     ADecalActor* NewDecal = World->SpawnActor<ADecalActor>(Location, FRotator::ZeroRotator, SpawnParams);
     if (NewDecal)
@@ -104,8 +166,11 @@ ADecalActor* ADecalScatterVolume::SpawnDecalActor(UWorld* World,
         NewDecal->SetActorRotation(Rotation);
         NewDecal->SetDecalMaterial(DecalMaterial);
         // Fixed decal size as requested (X=128, Y=256, Z=256)
-        NewDecal->GetDecal()->DecalSize = FVector(128.f, 256.f, 256.f);
-        NewDecal->SetActorScale3D(ActorScale);
+		if (UDecalComponent* DecalComp = NewDecal->GetDecal())
+		{
+			DecalComp->DecalSize = FVector(128.f, 256.f, 256.f);
+		}
+        NewDecal->SetActorScale3D(SafeScale);
 #if WITH_EDITOR
         NewDecal->SetActorLabel(DecalBaseName);
 #endif
@@ -174,6 +239,12 @@ bool ADecalScatterVolume::SampleAndHitWithinVolume(FRandomStream& RandomStream,
 
 void ADecalScatterVolume::ScatterDecals()
 {
+	if (bIsScattering)
+	{
+		return;
+	}
+	TGuardValue<bool> ReentrancyGuard(bIsScattering, true);
+
     // Validation
     if (DecalElements.Num() == 0)
     {
@@ -224,6 +295,10 @@ void ADecalScatterVolume::ScatterDecals()
         return;
     }
 
+	const float EffectiveMinSpacing = FMath::Max(0.0f, MinDecalSpacing);
+	const float GridCellSize = (EffectiveMinSpacing > 0.0f) ? EffectiveMinSpacing : 1.0f;
+	TMap<FIntVector, TArray<FVector>> PlacedPointGrid;
+
     // Scatter loop
     for (int32 i = 0; i < ScatterCount; ++i)
     {
@@ -238,6 +313,14 @@ void ADecalScatterVolume::ScatterDecals()
             {
                 continue; // resample
             }
+
+			if (EffectiveMinSpacing > 0.0f)
+			{
+				if (HasNearbyPointWithinRadius(PlacedPointGrid, GridCellSize, Hit.Location, EffectiveMinSpacing))
+				{
+					continue; // too close to an existing decal, try again
+				}
+			}
 
             // Debug draw: sample (green) and hit (red)
             //DrawDebugSphere(World, WorldSample, 10.f, 12, FColor::Green, false, 3.0f, 0, 1.25f);
@@ -262,6 +345,13 @@ void ADecalScatterVolume::ScatterDecals()
             if (ADecalActor* NewDecal = SpawnDecalActor(World, Mat, DecalBaseName, Hit.Location, ActorRot, ActorScale))
             {
                 SpawnedDecals.Add(NewDecal);
+
+				if (EffectiveMinSpacing > 0.0f)
+				{
+					const FIntVector Key = ToGridKey(Hit.Location, GridCellSize);
+					PlacedPointGrid.FindOrAdd(Key).Add(Hit.Location);
+				}
+
                 bSpawned = true;
                 break; // next scatter
             }

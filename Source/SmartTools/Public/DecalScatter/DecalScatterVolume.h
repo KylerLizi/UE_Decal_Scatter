@@ -34,6 +34,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int32 ScatterCount = 10;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (DisplayName = "Min Decal Spacing", ClampMin = "0.0"))
+    float MinDecalSpacing = 0.0f;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int32 Seed = 123;
 
@@ -58,6 +61,8 @@ public:
 private:
     UPROPERTY()
     TArray<TWeakObjectPtr<ADecalActor>> SpawnedDecals;
+
+    bool bIsScattering = false;
 
     // Helpers
     bool SampleAndHitWithinVolume(FRandomStream& RandomStream,
@@ -86,4 +91,3 @@ public:
 
     void ClearDecals();
 };
-
